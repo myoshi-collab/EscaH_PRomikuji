@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超昂大戦 毎日おみくじ（テスト用）</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            text-align: center;
+            background-color: #fce4ec;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #e91e63; font-size: 24px; }
+        .omikuji-box {
+            font-size: 80px;
+            margin: 20px 0;
+            display: inline-block;
+        }
+        .shake {
+            animation: shake 0.5s infinite;
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-10deg); }
+            20% { transform: translate(-3px, 0px) rotate(10deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(10deg); }
+            50% { transform: translate(-1px, 2px) rotate(-10deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-10deg); }
+            80% { transform: translate(-1px, -1px) rotate(10deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-10deg); }
+        }
+        .btn {
+            background-color: #e91e63;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+        .btn:hover { background-color: #c2185b; }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        #result-area { display: none; margin-top: 25px; }
+        
+        /* 画像のスタイルを調整 */
+        .character-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 300px;
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            display: block;
+            object-fit: contain;
+        }
+        
+        .char-name {
+            font-size: 22px;
+            color: #e91e63;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #fce4ec;
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        .fortune-text {
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: left;
+            padding: 0 10px;
+        }
+        .x-share-btn {
+            display: inline-block;
+            background-color: #000;
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            margin-top: 25px;
+            font-weight: bold;
+        }
+        .message { margin-top: 15px; font-weight: bold; color: #d32f2f; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>超昂大戦 毎日おみくじ</h1>
+    <p>※現在テストモード：何度でも引けます</p>
+
+    <div id="omikuji-box" class="omikuji-box">⛩️</div><br>
+    
+    <button id="draw-btn" class="btn">おみくじを引く</button>
+    <div id="limit-message" class="message"></div>
+
+    <div id="result-area">
+        <img id="char-img" class="character-img" src="" alt="キャラクター画像" style="display:none;">
+        
+        <h2 id="char-name" class="char-name"></h2>
+        <p id="fortune-text" class="fortune-text"></p>
+        
+        <a id="x-share" class="x-share-btn" href="#" target="_blank">𝕏 で結果をシェアする</a>
+    </div>
+</div>
+
+<script>
+    const characters = [
+        { name: "エスカ・ルビー", text: "今日はあなたの情熱が燃え上がる最高の一日！どんな困難もルビーのように熱く打ち砕けます。積極的に行動すれば、周囲を巻き込む大成功に繋がりますよ！", img: "ruby.png" },
+        { name: "エスカ・トパーズ", text: "とても穏やかで平和な一日になるでしょう。あなたの優しさと包容力が誰かの大きな支えになります。誰かに優しくした分、あなたにも素敵な幸運が返ってきますよ。", img: "sapphire.png" },
+        { name: "エスカ・サファイア", text: "今日は頭脳が冴え渡る素晴らしい一日。サファイアのように冷静な判断ができ、難しい問題もスルスルと解けてしまうはず。新しい知識を吸収するのにも最適です！", img: "topaz.png" },
+        { name: "エスカ・アメイズ", text: "ワクワクするような嬉しいサプライズが待っている予感！アメイズのように遊び心を持って過ごすことで、日常が魔法のように楽しいものに変わりますよ。", img: "amaze.png" },
+        { name: "閃忍イノリ", text: "類まれなる集中力を発揮できる日。まるで影のようにスムーズに、どんな任務も完璧にこなせます。あなたの真面目な努力が大きな成果を生みます！", img: "inori.png" },
+        { name: "閃忍ライカ", text: "スピード勝負ならあなたの独壇場！稲妻のごとく素早く、爽快に物事が進んでいきます。直感を信じて即行動することで、最高の結果が手に入るでしょう！", img: "leica.png" },
+        { name: "レガリアの神騎ユリエル", text: "正義と光の加護があなたに降り注いでいます。これまでの誠実な頑張りが、最高の形で報われる一日。自信を持って堂々と前へ進んでください！", img: "uriel.png" },
+        { name: "レガリアの神騎マヤエル", text: "心身ともに深い癒しを得られる一日。焦らずリラックスして過ごすことで、内なるエネルギーが満ち溢れてきます。あなたの笑顔が周囲を温かく照らすでしょう。", img: "Mayael.png" },
+        { name: "レガリアの神騎メガエル", text: "圧倒的なパワーがみなぎっています！目の前に立ち塞がる壁も、今日のあなたなら豪快に吹き飛ばせるはず。どんな挑戦もポジティブに楽しんでいきましょう！", img: "mega-l.png" },
+        { name: "ユーノ", text: "オールグリーン！今日のあなたは完璧なナビゲートに導かれています。計画通りに全てが順調に進み、トラブルとは無縁の一日。安心してやりたい事を楽しんで！", img: "yuno.png" }
+    ];
+
+    const drawBtn = document.getElementById('draw-btn');
+    const box = document.getElementById('omikuji-box');
+    const resultArea = document.getElementById('result-area');
+    const limitMessage = document.getElementById('limit-message');
+
+    // ==========================================
+    // 【テスト用】1日1回の制限をコメントアウトしています
+    // 本番公開時は /* と */ を消して有効にしてください
+    // ==========================================
+    /*
+    const today = new Date().toLocaleDateString();
+    const lastPlayed = localStorage.getItem('omikujiLastPlayed');
+
+    if (lastPlayed === today) {
+        drawBtn.disabled = true;
+        limitMessage.textContent = "本日はすでに引きました。また明日挑戦してね！";
+    }
+    */
+
+    drawBtn.addEventListener('click', () => {
+        drawBtn.disabled = true; // 演出中はボタンを連打できないようにする
+        box.classList.add('shake');
+        resultArea.style.display = 'none';
+        limitMessage.textContent = "引いています...";
+
+        setTimeout(() => {
+            box.classList.remove('shake');
+            box.textContent = "🎊";
+            limitMessage.textContent = "";
+            
+            const result = characters[Math.floor(Math.random() * characters.length)];
+            
+            document.getElementById('char-name').textContent = result.name;
+            document.getElementById('fortune-text').textContent = result.text;
+            
+            // 画像の表示
+            if(result.img !== "") {
+                document.getElementById('char-img').src = result.img;
+                document.getElementById('char-img').style.display = 'block';
+            }
+
+            const siteUrl = encodeURIComponent(window.location.href);
+            const shareText = encodeURIComponent(`今日のキャラクターは【${result.name}】でした！\n「${result.text}」\n\n#超昂大戦おみくじ #超昂大戦\n`);
+            document.getElementById('x-share').href = `https://twitter.com/intent/tweet?text=${shareText}&url=${siteUrl}`;
+
+            resultArea.style.display = 'block';
+
+            // ==========================================
+            // 【テスト用】以下の引いた履歴の保存もコメントアウトしています
+            // ==========================================
+            // localStorage.setItem('omikujiLastPlayed', new Date().toLocaleDateString());
+            
+            // 【テスト用】結果表示後にボタンを再度押せるようにする
+            drawBtn.disabled = false; 
+
+        }, 1500);
+    });
+</script>
+
+</body>
+</html>
