@@ -3,65 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>超昂大戦 毎日おみくじ（テスト用）</title>
+    <title>超昂大戦 毎日おみくじ（豪華演出版）</title>
     <style>
         body {
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
             text-align: center;
-            background-color: #fce4ec;
+            background-color: #fce4ec; /* サイト背景色 */
+            background-image: url('背景画像のファイル名があればここに'); /* 背景画像を入れる場合 */
+            background-size: cover;
+            background-position: center;
             color: #333;
             padding: 20px;
+            margin: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
         }
         .container {
             max-width: 500px;
             margin: 0 auto;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.9);
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 30;
         }
         h1 { color: #e91e63; font-size: 24px; }
-        .omikuji-box {
-            font-size: 80px;
-            margin: 20px 0;
-            display: inline-block;
+        
+        /* シルエット画像の初期設定 */
+        .dynamo-img {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            margin: 20px auto;
+            display: block;
+            border-radius: 50%; /* 画像を丸く見せる場合 */
         }
-        .shake {
-            animation: shake 0.5s infinite;
+
+        /* 演出開始時のアニメーション（回転 ＋ 徐々にピンク発光） */
+        .anim-active {
+            animation: 
+                spin 1s linear infinite, /* 1秒で1回転を繰り返す */
+                glowPink 3s ease-in-out forwards; /* 3秒かけてピンクに発光 */
         }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-10deg); }
-            20% { transform: translate(-3px, 0px) rotate(10deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(10deg); }
-            50% { transform: translate(-1px, 2px) rotate(-10deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-10deg); }
-            80% { transform: translate(-1px, -1px) rotate(10deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-10deg); }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.1); } /* 少し大きくなる */
+            100% { transform: rotate(360deg) scale(1); }
         }
+
+        @keyframes glowPink {
+            0% { filter: drop-shadow(0 0 0px transparent); }
+            50% { filter: drop-shadow(0 0 20px #ff007f); }
+            100% { filter: drop-shadow(0 0 50px #ff007f) drop-shadow(0 0 80px #ff1493); }
+        }
+
         .btn {
             background-color: #e91e63;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 18px;
+            padding: 15px 40px;
+            font-size: 20px;
             border-radius: 30px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background 0.3s, transform 0.1s;
             font-weight: bold;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(233, 30, 99, 0.4);
         }
         .btn:hover { background-color: #c2185b; }
-        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
+        
         #result-area { display: none; margin-top: 25px; }
         
-        /* 画像のスタイルを調整 */
         .character-img {
             max-width: 100%;
             height: auto;
-            max-height: 300px;
+            max-height: 350px;
             border-radius: 10px;
             margin: 0 auto 15px;
             display: block;
@@ -69,7 +89,7 @@
         }
         
         .char-name {
-            font-size: 22px;
+            font-size: 24px;
             color: #e91e63;
             margin-bottom: 15px;
             border-bottom: 2px solid #fce4ec;
@@ -78,9 +98,10 @@
         }
         .fortune-text {
             font-size: 16px;
-            line-height: 1.6;
+            line-height: 1.8;
             text-align: left;
             padding: 0 10px;
+            font-weight: bold;
         }
         .x-share-btn {
             display: inline-block;
@@ -93,25 +114,55 @@
             font-weight: bold;
         }
         .message { margin-top: 15px; font-weight: bold; color: #d32f2f; }
+
+        /* 蝶々エフェクト */
+        .butterfly {
+            position: fixed;
+            font-size: 35px;
+            filter: drop-shadow(0 0 10px #ff007f) drop-shadow(0 0 20px #ff69b4); /* ピンク系の光に変更 */
+            opacity: 0;
+            pointer-events: none;
+            z-index: 40;
+        }
+        @keyframes flutter {
+            0% { transform: translateY(100vh) translateX(0) scale(0.5) rotate(-20deg); opacity: 0; }
+            10% { opacity: 1; }
+            50% { transform: translateY(50vh) translateX(40px) scale(1) rotate(10deg); }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) translateX(-40px) scale(1.5) rotate(-30deg); opacity: 0; }
+        }
+
+        /* 画面全体のフラッシュ光 */
+        .flash {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+            transition: opacity 0.8s ease-out; /* 光る速度を少し長めに調整 */
+        }
     </style>
 </head>
 <body>
 
+<div id="flash" class="flash"></div>
+
 <div class="container">
     <h1>超昂大戦 毎日おみくじ</h1>
-    <p>※現在テストモード：何度でも引けます</p>
-
-    <div id="omikuji-box" class="omikuji-box">⛩️</div><br>
     
-    <button id="draw-btn" class="btn">おみくじを引く</button>
-    <div id="limit-message" class="message"></div>
+    <!-- シルエット画像エリア -->
+    <div id="waiting-area">
+        <img id="dynamo-img" class="dynamo-img" src="ドキドキダイナモシルエット.webp" alt="ダイナモシルエット">
+        <button id="draw-btn" class="btn">おみくじを引く</button>
+        <div id="limit-message" class="message"></div>
+    </div>
 
+    <!-- 結果エリア -->
     <div id="result-area">
         <img id="char-img" class="character-img" src="" alt="キャラクター画像" style="display:none;">
-        
         <h2 id="char-name" class="char-name"></h2>
         <p id="fortune-text" class="fortune-text"></p>
-        
         <a id="x-share" class="x-share-btn" href="#" target="_blank">𝕏 で結果をシェアする</a>
     </div>
 </div>
@@ -131,62 +182,77 @@
     ];
 
     const drawBtn = document.getElementById('draw-btn');
-    const box = document.getElementById('omikuji-box');
+    const dynamoImg = document.getElementById('dynamo-img');
+    const waitingArea = document.getElementById('waiting-area');
     const resultArea = document.getElementById('result-area');
     const limitMessage = document.getElementById('limit-message');
-
-    // ==========================================
-    // 【テスト用】1日1回の制限をコメントアウトしています
-    // 本番公開時は /* と */ を消して有効にしてください
-    // ==========================================
-    /*
-    const today = new Date().toLocaleDateString();
-    const lastPlayed = localStorage.getItem('omikujiLastPlayed');
-
-    if (lastPlayed === today) {
-        drawBtn.disabled = true;
-        limitMessage.textContent = "本日はすでに引きました。また明日挑戦してね！";
-    }
-    */
+    const flashScreen = document.getElementById('flash');
 
     drawBtn.addEventListener('click', () => {
-        drawBtn.disabled = true; // 演出中はボタンを連打できないようにする
-        box.classList.add('shake');
-        resultArea.style.display = 'none';
-        limitMessage.textContent = "引いています...";
+        // ボタンを無効化し、メッセージを変更
+        drawBtn.disabled = true; 
+        limitMessage.textContent = "運命が交差しています...";
 
+        // 1. シルエット画像を回転＆発光させるCSSクラスを追加
+        dynamoImg.classList.add('anim-active');
+
+        // 2. 蝶々を生成して飛ばす
+        createButterflies(25);
+
+        // 3. 3.2秒後に画面全体を白くフラッシュ（光に包まれる）
         setTimeout(() => {
-            box.classList.remove('shake');
-            box.textContent = "🎊";
-            limitMessage.textContent = "";
+            flashScreen.style.opacity = '1';
+        }, 3200);
+
+        // 4. 4.0秒後にフラッシュを消し、シルエットを消して結果を表示
+        setTimeout(() => {
+            flashScreen.style.opacity = '0'; // 光が晴れる
+            waitingArea.style.display = 'none'; // シルエットとボタンを非表示
             
+            // ランダムに結果を取得
             const result = characters[Math.floor(Math.random() * characters.length)];
             
+            // 結果を反映
             document.getElementById('char-name').textContent = result.name;
             document.getElementById('fortune-text').textContent = result.text;
-            
-            // 画像の表示
             if(result.img !== "") {
                 document.getElementById('char-img').src = result.img;
                 document.getElementById('char-img').style.display = 'block';
             }
 
+            // Xシェア用リンク設定
             const siteUrl = encodeURIComponent(window.location.href);
             const shareText = encodeURIComponent(`今日のキャラクターは【${result.name}】でした！\n「${result.text}」\n\n#超昂大戦おみくじ #超昂大戦\n`);
             document.getElementById('x-share').href = `https://twitter.com/intent/tweet?text=${shareText}&url=${siteUrl}`;
 
+            // 結果エリアを表示
             resultArea.style.display = 'block';
 
-            // ==========================================
-            // 【テスト用】以下の引いた履歴の保存もコメントアウトしています
-            // ==========================================
-            // localStorage.setItem('omikujiLastPlayed', new Date().toLocaleDateString());
-            
-            // 【テスト用】結果表示後にボタンを再度押せるようにする
-            drawBtn.disabled = false; 
+            // 演出が終わった蝶々を削除
+            document.querySelectorAll('.butterfly').forEach(b => b.remove());
 
-        }, 1500);
+        }, 4000);
     });
+
+    // 蝶々を生成する関数
+    function createButterflies(count) {
+        for (let i = 0; i < count; i++) {
+            const butterfly = document.createElement('div');
+            butterfly.classList.add('butterfly');
+            
+            // 蝶々の画像がある場合はここを変更（今は絵文字）
+            butterfly.textContent = '🦋'; 
+
+            butterfly.style.left = (Math.random() * 90) + 'vw';
+            
+            const duration = 2.5 + Math.random() * 2; // 2.5秒〜4.5秒
+            const delay = Math.random() * 1.5; // 0秒〜1.5秒遅れて発生
+            butterfly.style.animation = `flutter ${duration}s ease-in ${delay}s forwards`;
+            butterfly.style.transform = `scale(${0.6 + Math.random() * 1.0})`;
+
+            document.body.appendChild(butterfly);
+        }
+    }
 </script>
 
 </body>
